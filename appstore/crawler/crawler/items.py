@@ -8,10 +8,12 @@
 import scrapy
 
 
-class DmozItem(scrapy.Item):
+class CrawlerItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
     title = scrapy.Field()
-    link = scrapy.Field()
-    desc = scrapy.Field()
+    url = scrapy.Field()
+    appid = scrapy.Field()
+    intro = scrapy.Field()
+    recommended = scrapy.Field()
 
