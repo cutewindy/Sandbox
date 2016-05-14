@@ -1,0 +1,10 @@
+
+.metadata/
+.recommenders/
+*.class
+
+BattleShip/.settings/org.eclipse.jdt.core.prefs
+
+BattleShip/.project
+
+BattleShip/.classpath
