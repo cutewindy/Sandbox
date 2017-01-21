@@ -1,3 +1,4 @@
+#!/opt/python-3.4/linux/bin/python3
 
 from collections import defaultdict
 import sys
@@ -52,7 +53,7 @@ movies_count = 0
 
 
 def error(message):
-    print message
+    print(message)
 
 
 """check whether the input data is valid"""
@@ -113,8 +114,7 @@ def init_data():
     global min_movie_id
     global max_movie_id
     global movies_count
-    my_file = open("t12", "r")
-    for line in my_file:
+    for line in sys.stdin:
         orig_line = line
         matchObj = re.match("(.*?)#.*", line)  # using regex to remove comment
         if matchObj:
@@ -132,7 +132,6 @@ def init_data():
         max_movie_id = max(movie_id, max_movie_id)
         users[user_id].append(Movie(movie_id, rating))
         movies[movie_id].append(user_id)
-    my_file.close()
     users_count = max_user_id - min_user_id + 1
     movies_count = max_movie_id - min_movie_id + 1
     # print data in two dict
@@ -173,7 +172,7 @@ def cooccurrence_matrix():
             if (i + min_movie_id) not in movie_set and weights[i] > max_weight:
                 max_weight = weights[i]
                 recommendation[user - min_user_id] = i + min_movie_id
-    print "co-occurrence: ", recommendation
+    print("co-occurrence: ", recommendation)
 
 
 
@@ -214,7 +213,7 @@ def user_based():
                 if average_weight > max_weight:
                     max_weight = average_weight
                     recommendation[user - min_user_id] = movie
-    print "user-based: ", recommendation
+    print("user-based: ", recommendation)
 
 
 
