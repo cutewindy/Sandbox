@@ -12,36 +12,7 @@ class Movie(object):
         self.rating = rating
 
 
-"""create file of input data"""
-# def create_input_file():
-#     my_file = open("test_data", "w")
-#     my_file.write("Here is the date of movie recommendation system:\n")
-#     my_file.write("1, 101, 5.0\n")
-#     my_file.write("1, 102, 3.0\n")
-#     my_file.write("1, 103, 2.5\n")
-#     my_file.write("2, 101, 2.0\n")
-#     my_file.write("2, 102, 2.5\n")
-#     my_file.write("2, 103, 5.0\n")
-#     my_file.write("2, 104, 2.0\n")
-#     my_file.write("3, 101, 2.5\n")
-#     my_file.write("3, 104, 4.0\n")
-#     my_file.write("3, 105, 4.5\n")
-#     my_file.write("3, 107, 5.0\n")
-#     my_file.write("4, 101, 5.0\n")
-#     my_file.write("4, 103, 3.0\n")
-#     my_file.write("4, 104, 4.5\n")
-#     my_file.write("4, 106, 4.0\n")
-#     my_file.write("5, 101, 4.0\n")
-#     my_file.write("5, 102, 3.0\n")
-#     my_file.write("5, 103, 2.0\n")
-#     my_file.write("5, 104, 4.0\n")
-#     my_file.write("5, 105, 3.5\n")
-#     my_file.write("5, 106, 4.0\n")
-#     my_file.close()
-
-
-
-"""Globla value: initialize data into user hash and movie hash"""
+# Globla value: initialize data into user hash and movie hash
 users = defaultdict(list)  # dict (key, value) = (user_id, list[(movie_id, rating)])
 movies = defaultdict(list)  # dict (key, value) = (movie_id, list[user_id])
 min_user_id = sys.maxsize
@@ -56,8 +27,8 @@ def error(message):
     print(message)
 
 
-"""check whether the input data is valid"""
 def is_valid(data):
+    """check whether the input data is valid"""
     # 1. check data length
     if len(data) != 3:
         error("Invalid data: expect 3 splited values, got: %s." % len(data))
@@ -66,26 +37,10 @@ def is_valid(data):
     if not data[0].isdigit():
         error("Invalid data: user_id '%s' is not an integer." % data[0])
         return False
-    # try:
-    #     user_id = int(data[0])
-    #     if user_id < 0:
-    #         error("Invalid data: user_id '%s' is out of range." % data[0])
-    #         return False
-    # except ValueError:
-    #     print "Invalid data: user_id '%s' is not an integer." % data[0]
-    #     return False
     # 3. check movie_id is integer
     if not data[1].isdigit():
         error("Invalid data: user_id '%s' is not an integer." % data[1])
         return False
-    # try:
-    #     movie_id = int(data[1])
-    #     if movie_id < 0:
-    #         error("Invalid data: movie_id '%s' is out of range." % data[1])
-    #         return False
-    # except ValueError:
-    #     print "Invalid data: movie_id '%s' is not an integer." % data[1]
-    #     return False
     # 4. check rating is floating and in range[0.0, 5.0]
     try:
         rating = float(data[2])
@@ -96,16 +51,6 @@ def is_valid(data):
         error("Invalid data: rating '%s' is not a floating." % data[2])
         return False
     return True
-
-# test invalid data:
-# line = "   11  , 22 , 3 ###21"
-# matchObj = re.match("(.*?)#.*", line)
-# if matchObj:
-#     line = matchObj.group(1)
-# data = [x.strip() for x in line.split(",")]
-# print is_valid(data)
-
-
 
 def init_data():
     global min_user_id
@@ -134,16 +79,10 @@ def init_data():
         movies[movie_id].append(user_id)
     users_count = max_user_id - min_user_id + 1
     movies_count = max_movie_id - min_movie_id + 1
-    # print data in two dict
-    # for key in users:
-    #     for l in users[key]:
-    #         print key, l.movie_id, l.rating
-    # print movies.items()
-    # print "==========="
 
 
-"""cooccurrence recommender algorithm"""
 def cooccurrence_matrix():
+    """cooccurrence recommender algorithm"""
     # step1: calculate cooccurrence matrix
     matrix = numpy.zeros((movies_count, movies_count))
     recommendation = [0] * users_count
@@ -176,8 +115,8 @@ def cooccurrence_matrix():
 
 
 
-"""User_based recommendation algorithm"""
 def user_based():
+    """User_based recommendation algorithm"""
     recommendation = [0] * users_count
     # step1: using cosine_similarity to calculate similar matrix
     similar_matrix = numpy.zeros((users_count, users_count))
@@ -215,20 +154,10 @@ def user_based():
                     recommendation[user - min_user_id] = movie
     print("user-based: ", recommendation)
 
-
-
 def run():
-    # create_input_file()
     init_data()
     cooccurrence_matrix()
     user_based()
-
-    # for user in movies[206]:
-    #     print user
-    #     for movie in users[user]:
-    #         if movie.movie_id == 206:
-    #             print movie.movie_id, movie.rating
-
 
 if __name__ == "__main__":
     run()
