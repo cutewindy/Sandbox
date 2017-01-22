@@ -17,7 +17,7 @@ class User(object):
     def __init__(self, id):
         self.id = id
         self.ratings = dict() # {movie_id : rating}
-        self.recommend_movie_ids = dict()
+        self.recommend_movie_ids = dict() # {'algorithm' : [recommend_movie_id]}
         self.recommend_movie_ids['cooccurrence'] = list()
         self.recommend_movie_ids['user_based_cos_similarity'] = list()
 
@@ -34,15 +34,12 @@ class Movie(object):
     def watched_by_user(self, user_id, rating):
         self.ratings[user_id] = rating
 
-    def isWatchedByUser(self, user_id): 
-        return user_id in self.getUsers()
-
 
 class MovieRecommendationProgram(object):
     users = dict() # {user_id : <User Object>}
     movies = dict() # {movie_id : <Movie Object>}
-    users_list = None
-    movies_list = None
+    users_list = None # [user_id] used for mapping matrix index and user_id
+    movies_list = None # [movie_id] used for mapping matrix index and movie_id
 
     def __init__(self):
         self.run()
@@ -63,12 +60,12 @@ class MovieRecommendationProgram(object):
                 line = matchObj.group(1)
             data = [x.strip() for x in line.split(",")]  # split string with ","
             if not self.is_valid(data):
-                error("The invalid data is: %s" % orig_line)
+                error(" " * 8 + "The invalid data is: %s" % orig_line)
                 continue
             user_id = int(data[0])
             movie_id = int(data[1])
             rating = float(data[2])
-            
+
             if user_id not in users:
                 users[user_id] = User(user_id)
             if movie_id not in movies:
@@ -114,14 +111,14 @@ class MovieRecommendationProgram(object):
 
         # step1: calculate cooccurrence matrix
         matrix = numpy.zeros((movies_count, movies_count))
-        for user_id, user in users.items():
+        for user_id in users_list:
             seen = set()
-            for movie_id1 in user.ratings:
-                for movie_id2 in user.ratings:
+            for movie_id1 in users[user_id].ratings:
+                for movie_id2 in users[user_id].ratings:
                     if movie_id2 in seen:
                         continue
-                    m_i = movies_list.index(movie_id1) 
-                    m_j = movies_list.index(movie_id2) 
+                    m_i = movies_list.index(movie_id1)
+                    m_j = movies_list.index(movie_id2)
                     if m_i == m_j:
                         matrix[m_i][m_j] += 1
                     else:
@@ -140,7 +137,7 @@ class MovieRecommendationProgram(object):
             weights = list(matrix.dot(user_ratings_list))
             recommend_movie_ids = []
             max_weight = 0
-            for i, weight in enumerate(weights): 
+            for i, weight in enumerate(weights):
                 if movies_list[i] in user.ratings:
                     continue
                 if weight > max_weight:
@@ -148,7 +145,7 @@ class MovieRecommendationProgram(object):
                     recommend_movie_ids = [movies_list[i]]
                 elif weight == max_weight:
                     recommend_movie_ids.append(movies_list[i])
-            user.recommend_movie_ids['cooccurrence'] = recommend_movie_ids
+            user.recommend_movie_ids['cooccurrence'] = sorted(recommend_movie_ids)
 
     def do_user_based_cos_similarity_algorithm(self):
         """User based cos similarity recommendation algorithm"""
@@ -161,11 +158,11 @@ class MovieRecommendationProgram(object):
 
         # step1: using cosine_similarity to calculate similar matrix
         rating_matrix = numpy.zeros((users_count, movies_count))
-        for user_id, user in users.items():
-            for movie_id in user.ratings:
+        for user_id in users_list:
+            for movie_id in users[user_id].ratings:
                 m_i = users_list.index(user_id)
                 m_j = movies_list.index(movie_id)
-                rating_matrix[m_i][m_j] = user.ratings[movie_id]
+                rating_matrix[m_i][m_j] = users[user_id].ratings[movie_id]
 
         similar_matrix = numpy.zeros((users_count, users_count))
         for i in range(users_count):
@@ -180,11 +177,11 @@ class MovieRecommendationProgram(object):
                     similar_matrix[j][i] = curr
 
         # step2: naive and slow algorithm
-        for user_id, user in users.items():
+        for user_id in users_list:
             recommend_movie_ids = []
-            max_avg_weight = 0
-            for movie_id in movies:
-                if movie_id in user.ratings:
+            max_avg_weight = -1
+            for movie_id in movies_list:
+                if movie_id in users[user_id].ratings:
                     continue
                 weight = 0
                 count = 0
@@ -195,27 +192,33 @@ class MovieRecommendationProgram(object):
                         continue
                     weight += v * similar_matrix[users_list.index(user_id)][m_i]
                     count += 1
-                avg_weight = weight / count
+                avg_weight = weight / count if count != 0 else \
+                             0
                 if avg_weight > max_avg_weight:
                     max_avg_weight = avg_weight
                     recommend_movie_ids = [movie_id]
                 elif avg_weight == max_avg_weight:
                     recommend_movie_ids.append(movie_id)
-            user.recommend_movie_ids['user_based_cos_similarity'] = recommend_movie_ids
+            users[user_id].recommend_movie_ids['user_based_cos_similarity'] = sorted(recommend_movie_ids)
 
-    def show_result(self): 
-        print("=" * 40)
-        print("Coocurrence recommender algorithm: ")
+    def show_result(self):
+        print("=" * 50)
+        print("1. Coocurrence recommender algorithm: ")
         for user_id, user in self.users.items():
-            print("for user %s, recommend movies: %s" % (user_id, user.recommend_movie_ids['cooccurrence']))
-        print("=" * 40 + "\n")
-        print("=" * 40)
-        print("User-based cos similarity recommendation: ")
+            print(" " * 8 + "User: %-3s =>  Movies: %s" % (user_id, user.recommend_movie_ids['cooccurrence']))
+        print("=" * 50)
+        print("2. User-based cos similarity recommendation: ")
         for user_id, user in self.users.items():
-            print("for user %s, recommend movies: %s" % (user_id, user.recommend_movie_ids['user_based_cos_similarity']))
-        print("=" * 40 + "\n")
+            print(" " * 8 + "User: %-3s =>  Movies: %s" % (user_id, user.recommend_movie_ids['user_based_cos_similarity']))
 
 main = MovieRecommendationProgram
 
 if __name__ == '__main__':
+    print("\n" * 2 + "*" * 50)
+    print(" " * 12 + "Movie recommendation System")
+    print(" " * 14 + "Program 1, Wendi Weng")
+    print("*" * 50 + "\n")
     main()
+    print("\n" + "*" * 50)
+    print(" " * 22 + "Done")
+    print("*" * 50 + "\n")
