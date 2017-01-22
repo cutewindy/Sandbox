@@ -10,3 +10,5 @@ BattleShip/.project
 BattleShip/.classpath
 
 .DS_Store
+
+*.swp
